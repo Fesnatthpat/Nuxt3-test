@@ -12,68 +12,58 @@ type TPost = {
     published: boolean;
 };
 
-// สร้างตัวแปร reactive
-const title = ref("");
-const content = ref("");
+// Reactive variables
+const title = ref<string>("");
+const content = ref<string>("");
 const posts = ref<TPost[] | null>(null);
 const file = ref<File | null>(null);
 
-// โหลดโพสต์จาก API
-const loadPosts = async () => {
+// Load posts from API
+const loadPosts = async (): Promise<void> => {
     try {
         const res = await $fetch<TPost[]>("/api/posts");
         posts.value = res;
-    } catch (err) {
-        console.error("Failed to load posts:", err);
+    } catch (error) {
+        console.error("Failed to load posts:", error);
+        alert("Error loading posts.");
     }
 };
 await loadPosts();
 
-// จัดการการอัปโหลดไฟล์
-const handleFile = (event: Event) => {
+// Handle file input
+const handleFile = (event: Event): void => {
     const target = event.target as HTMLInputElement;
-    if (target.files) {
-        file.value = target.files[ 0 ];
+    if (target.files && target.files[0]) {
+        file.value = target.files[0];
     }
 };
 
-// ฟังก์ชันเพิ่มโพสต์ใหม่
+// Add a new post
 const submit = async () => {
-    if (!file.value) {
-        alert("Please select an image.");
-        return;
-    }
-
     const formData = new FormData();
     formData.append("title", title.value);
-    formData.append("content", content.value || "");
-    formData.append("file", file.value);
+    formData.append("content", content.value);
+    if (file.value) {
+        formData.append("image", file.value);  // ส่งไฟล์ที่เลือก
+    }
 
     try {
-        const res = await $fetch<TPost>("/api/posts", {
-            method: "POST",
-            body: formData,
+        const response = await fetch('/api/posts', {
+            method: 'POST',
+            body: formData,  // ส่ง FormData แทน JSON
         });
-        console.log(res)
 
-        if (posts.value) {
-            posts.value.unshift(res);
-        } else {
-            posts.value = [ res ];
+        if (!response.ok) {
+            throw new Error(`Failed to create post: ${response.statusText}`);
         }
-
-        alert("Post created successfully!");
-        title.value = "";
-        content.value = "";
-        file.value = null;
-    } catch (err) {
-        console.error(err);
-        alert("Failed to create post.");
+        console.log('Post created successfully');
+    } catch (error) {
+        console.error('Failed to create post:', error);
     }
 };
 
-// ฟังก์ชันแก้ไขโพสต์
-const editPost = async (id: number) => {
+// Edit an existing post
+const editPost = async (id: number): Promise<void> => {
     const newTitle = prompt("Enter new title:");
     const newContent = prompt("Enter new content:");
 
@@ -81,27 +71,24 @@ const editPost = async (id: number) => {
         try {
             const res = await $fetch<TPost>(`/api/posts/${id}`, {
                 method: "PUT",
-                body: {
-                    title: newTitle,
-                    content: newContent,
-                },
+                body: { title: newTitle, content: newContent },
             });
 
             const index = posts.value?.findIndex((post) => post.id === id);
             if (index !== undefined && index >= 0 && posts.value) {
-                posts.value[ index ] = res;
+                posts.value[index] = res;
             }
 
             alert("Post updated successfully!");
-        } catch (err) {
-            console.error(err);
-            alert("Failed to update post.");
+        } catch (error) {
+            console.error("Failed to update post:", error);
+            alert("Error updating post.");
         }
     }
 };
 
-// ฟังก์ชันลบโพสต์
-const deletePost = async (id: number) => {
+// Delete a post
+const deletePost = async (id: number): Promise<void> => {
     if (confirm("Are you sure you want to delete this post?")) {
         try {
             await $fetch(`/api/posts/${id}`, { method: "DELETE" });
@@ -109,29 +96,31 @@ const deletePost = async (id: number) => {
                 posts.value = posts.value.filter((post) => post.id !== id);
             }
             alert("Post deleted successfully!");
-        } catch (err) {
-            console.error(err);
-            alert("Failed to delete post.");
+        } catch (error) {
+            console.error("Failed to delete post:", error);
+            alert("Error deleting post.");
         }
     }
 };
 
+// Set page title
 useHead({
     title: "Manage Posts",
 });
 </script>
 
+
 <template>
     <div class="container mx-auto min-h-screen max-w-screen">
-        <!-- Form สำหรับเพิ่มโพสต์ -->
+        <!-- Form for adding a new post -->
         <form @submit.prevent="submit" class="flex flex-col gap-4 items-center">
             <input v-model="title" type="text" placeholder="Title" class="w-1/2 p-2 border rounded" />
-            <input v-model="content" type="text" placeholder="Content" class="w-1/2 p-2 border rounded" />
+            <textarea v-model="content" placeholder="Content" class="w-1/2 p-2 border rounded"></textarea>
             <input type="file" @change="handleFile" class="w-1/2 p-2" />
             <button class="px-4 py-2 bg-green-500 text-white rounded">Add Post</button>
         </form>
 
-        <!-- รายการโพสต์ -->
+        <!-- List of posts -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-10">
             <div v-for="post in posts || []" :key="post.id" class="p-4 border rounded shadow-md bg-gray-100">
                 <h3 class="text-lg font-bold">{{ post.title }}</h3>
