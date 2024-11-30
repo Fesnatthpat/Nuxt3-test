@@ -1,7 +1,7 @@
-type TPost = {
+export type TPost = {
     id: number;
     title: string;
-    content: string | null;
+    content: string
     image: string  // เพิ่ม image
     createdAt: string;
     updatedAt: string;

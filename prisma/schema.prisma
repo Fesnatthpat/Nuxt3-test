@@ -12,7 +12,6 @@ model Post {
   id        Int      @id @default(autoincrement())
   title     String
   content   String?
-  image     String? // URL ของรูปภาพ
   published Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

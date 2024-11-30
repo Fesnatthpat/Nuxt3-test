@@ -1,5 +1,5 @@
 // import { useRuntimeConfig } from "#app";
-import { type TPost } from "~~/types/post";
+import { type TPost } from "~~/types/post"
 
 export default () => {
     const config = useRuntimeConfig();
