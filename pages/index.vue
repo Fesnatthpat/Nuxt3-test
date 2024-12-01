@@ -19,7 +19,7 @@ const posts = ref<TPost[] | null>(null); // posts อาจเป็น null
 // โหลดโพสต์จาก API
 const loadPosts = async () => {
     try {
-        const res = await $fetch<TPost[]>('/api/posts');
+        const res = await $fetch<TPost[]>(`/api/posts`);
         posts.value = res; // อัปเดตค่า posts.value
     } catch (err) {
         console.error('Failed to load posts:', err);
@@ -30,7 +30,7 @@ await loadPosts();
 // ฟังก์ชันเพิ่มโพสต์ใหม่
 async function submit() {
     try {
-        const res = await $fetch<TPost>('/api/posts', {
+        const res = await $fetch<TPost>(`/api/posts`, {
             method: 'POST',
             body: {
                 title: title.value,
@@ -86,7 +86,9 @@ const editPost = async (id: number) => {
 const deletePost = async (id: number) => {
     if (confirm('Are you sure you want to delete this post?')) {
         try {
-            await $fetch(`/api/posts/${id}`, { method: 'DELETE' });
+            await $fetch(`/api/posts/${id}`, { 
+                method: 'DELETE' 
+            });
             if (posts.value) {
                 posts.value = posts.value.filter((post) => post.id !== id);
             }
